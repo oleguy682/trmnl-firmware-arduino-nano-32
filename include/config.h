@@ -106,6 +106,8 @@ enum WIFI_CONNECT_RETRY_TIME // Time to sleep before trying to connect to the Wi
 #define DEVICE_MODEL "arduino_nano_esp32"
 #define PIN_INTERRUPT 5         //external button on GPIO 5 (RTC-capable for deep sleep wake)
 #define FAKE_BATTERY_VOLTAGE    //using USB power for development, no battery ADC yet
+#undef TEMP_PROFILE_DEFAULT     //override global default
+#define TEMP_PROFILE_DEFAULT TEMP_PROFILE_A  //Waveshare V2 has fast refresh (GEN2) and 4-grayscale
 #endif
 
 #if defined(BOARD_XIAO_EPAPER_DISPLAY) || defined(BOARD_SEEED_RETERMINAL_E1001)
