@@ -1028,11 +1028,26 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
     }
     Log_info("Display refresh start");
 #ifdef BB_EPAPER
+#ifdef BOARD_ARDUINO_NANO_ESP32
+    // CRITICAL: Arduino Nano ESP32 MUST always use TEMP_PROFILE_A (1)
+    // Do NOT allow API to override this - GDEW075T7 requires GEN2 profile
+    if (apiDisplayResult.response.temp_profile != iTempProfile) {
+        Log_info("WARNING: API wants to change temp_profile to %d, but Arduino Nano ESP32 MUST use profile 1 - ignoring API",
+                 apiDisplayResult.response.temp_profile);
+    }
+    // Force save correct profile in case API response was bad
+    if (iTempProfile != TEMP_PROFILE_A) {
+        iTempProfile = TEMP_PROFILE_A;
+        preferences.putUInt(PREFERENCES_TEMP_PROFILE, iTempProfile);
+        Log_info("Re-forced temperature profile to %d", iTempProfile);
+    }
+#else
     if (iTempProfile != apiDisplayResult.response.temp_profile) {
         iTempProfile = apiDisplayResult.response.temp_profile;
         Log_info("Saving new temperature profile (%d) to FLASH", iTempProfile);
         preferences.putUInt(PREFERENCES_TEMP_PROFILE, iTempProfile);
     }
+#endif
     if ((iUpdateCount & 7) == 0 || apiDisplayResult.response.maximum_compatibility == true) {
         Log_info("%s [%d]: Forcing full refresh; desired refresh mode was: %d\r\n", __FILE__, __LINE__, iRefreshMode);
         iRefreshMode = REFRESH_FULL; // force full refresh every 8 partials
