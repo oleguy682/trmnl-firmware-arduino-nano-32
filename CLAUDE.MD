@@ -94,10 +94,77 @@ The project supports multiple hardware configurations via PlatformIO environment
 - **seeed_xiao_esp32s3** - Seeed Studio XIAO ESP32S3
 - **waveshare-esp32-driver** - Waveshare ESP32 e-paper driver board
 - **seeed_reTerminal_E1001** - Seeed reTerminal E1001
+- **arduino_nano_esp32** - Arduino Nano ESP32 with Waveshare 7.5" e-Paper HAT
 
 ### Testing
 - **native** - Run unit tests locally (Linux/Mac)
 - **native-windows** - Run unit tests on Windows
+
+## Arduino Nano ESP32 Configuration
+
+The **arduino_nano_esp32** environment supports the Arduino Nano ESP32 (ESP32-S3 based) with a Waveshare 7.5" e-Paper HAT display.
+
+### Hardware Specifications
+- **MCU**: Arduino Nano ESP32 (ESP32-S3, 16MB Flash, 8MB PSRAM)
+- **Display**: Waveshare 7.5" e-Paper HAT (GDEW075T7, 800x480, 4-level grayscale)
+- **Driver IC**: EK79655 (GD7965) - UC81xx compatible
+- **Pin Mappings** (custom wiring harness):
+  - SPI SCK: GPIO 48
+  - SPI MOSI: GPIO 38
+  - CS: GPIO 21
+  - DC: GPIO 18
+  - RST: GPIO 17
+  - BUSY: GPIO 10
+  - Button: GPIO 5 (RTC-capable for deep sleep wake)
+
+### Critical Configuration
+**Temperature Profile**: This board MUST use `TEMP_PROFILE_A` (profile 1) which selects the **EP75_800x480_GEN2** panel driver for GDEW075T7 (W variant). The code forcefully overrides any NVS-stored profile to prevent misconfiguration.
+
+**Panel Characteristics**:
+- Uses UC81xx chip type
+- BUSY pin is **active HIGH** when idle (opposite of SSD16xx)
+- Supports fast refresh mode (GEN2 profile)
+- 4-level grayscale capable
+
+### Known Issues & Solutions
+
+#### Issue: Firmware hangs during writePlane()
+**Symptoms**: Firmware freezes when attempting to write image data to display.
+
+**Root Cause**:
+1. Temperature profile mismatch - NVS may store incorrect profile (0) from previous firmware
+2. Wrong panel driver selected (EP75_800x480 vs EP75_800x480_GEN2)
+3. BUSY pin stuck LOW when UC81xx expects HIGH for idle state
+
+**Solution**:
+- Force `TEMP_PROFILE_A` in `display_init()` regardless of NVS value (commit a8970f4)
+- Added diagnostic logging to verify BUSY pin state
+- Clear documentation that UC81xx chips expect BUSY=HIGH when idle
+
+#### Issue: SPIFFS partition not found
+**Solution**: Manually flash partition table and SPIFFS using esptool:
+```bash
+esptool --chip esp32s3 --port COM# write_flash 0x8000 .pio/build/arduino_nano_esp32/partitions.bin
+esptool --chip esp32s3 --port COM# write_flash 0x410000 .pio/build/arduino_nano_esp32/spiffs.bin
+```
+
+### Build & Flash
+```bash
+# Build
+pio run -e arduino_nano_esp32
+
+# Upload firmware
+pio run -e arduino_nano_esp32 -t upload
+
+# Monitor serial output
+pio device monitor
+```
+
+### Development Notes
+- Uses **Arduino framework only** (not dual arduino+espidf) to avoid io_pin_remap conflicts
+- Custom partition table: 2MB app, 1MB SPIFFS (partitions_nano_esp32.csv)
+- CORE_DEBUG_LEVEL=5 for verbose logging during development
+- USB CDC enabled for serial debugging (ARDUINO_USB_MODE=1, ARDUINO_USB_CDC_ON_BOOT=1)
 
 ## Development Workflow
 
