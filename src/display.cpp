@@ -913,6 +913,7 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
    // Log_info("Paint_NewImage %d", reverse);
     Log_info("display_show_image start");
     Log_info("maximum_compatibility = %d\n", apiDisplayResult.response.maximum_compatibility);
+    Log_info("Image type check: isPNG=%d, data_size=%d", isPNG, data_size);
 #ifdef FUTURE
     if (reverse)
     {
@@ -943,18 +944,26 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
         if (*(uint16_t *)image_buffer == BB_BITMAP_MARKER)
         {
             // G5 compressed image
+            Log_info("Detected G5 compressed image");
             BB_BITMAP *pBBB = (BB_BITMAP *)image_buffer;
 #ifdef BB_EPAPER
+            Log_info("Allocating display buffer");
             bbep.allocBuffer(false);
             bAlloc = true;
+            Log_info("Buffer allocated successfully");
 #endif
             int x = (width - pBBB->width)/2;
             int y = (height - pBBB->height)/2; // center it
+            Log_info("Image position: x=%d, y=%d, width=%d, height=%d", x, y, pBBB->width, pBBB->height);
             if (x > 0 || y > 0) // only clear if the image is smaller than the display
             {
-                bbep.fillScreen(BBEP_WHITE); 
-            }     
+                Log_info("Clearing screen with fillScreen");
+                bbep.fillScreen(BBEP_WHITE);
+                Log_info("fillScreen complete");
+            }
+            Log_info("Loading G5 image to display buffer");
             bbep.loadG5Image(image_buffer, x, y, BBEP_WHITE, BBEP_BLACK);
+            Log_info("G5 image loaded successfully");
         } 
         else 
         {
@@ -989,7 +998,9 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
     }
     if (!bWait) iRefreshMode = REFRESH_PARTIAL; // fast update when showing loading screen
     Log_info("%s [%d]: EPD refresh mode: %d\r\n", __FILE__, __LINE__, iRefreshMode);
+    Log_info("About to call bbep.refresh() - this may take several seconds");
     bbep.refresh(iRefreshMode, bWait);
+    Log_info("bbep.refresh() completed successfully");
     if (bAlloc) {
         bbep.freeBuffer();
     }
