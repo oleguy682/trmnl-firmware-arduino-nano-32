@@ -1078,9 +1078,17 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
 
     Log_info("Checking if buffer needs to be freed: bAlloc=%d", bAlloc);
     if (bAlloc) {
+#ifdef BOARD_ARDUINO_NANO_ESP32
+        // WORKAROUND: freeBuffer() crashes due to heap corruption during display operations
+        // This is likely a PSRAM cache coherency issue with DMA transfers
+        // Skip freeing for now - will leak ~48KB per display update but prevents crash
+        Log_info("Skipping freeBuffer() on Arduino Nano ESP32 to avoid heap corruption crash");
+        Log_info("WARNING: This will leak memory - display buffer not freed");
+#else
         Log_info("Calling freeBuffer()...");
         bbep.freeBuffer();
         Log_info("freeBuffer() completed");
+#endif
     }
 
     Log_info("Incrementing update counter: iUpdateCount=%d", iUpdateCount);
