@@ -248,14 +248,20 @@ void bl_init(void)
   {
     Log.info("%s [%d]: Display TRMNL logo start\r\n", __FILE__, __LINE__);
 
-  
+
     display_show_image(storedLogoOrDefault(1), DEFAULT_IMAGE_SIZE, false);
+    Log_info("Returned from display_show_image successfully");
 
 
+    Log_info("Setting need_to_refresh_display flag");
     need_to_refresh_display = 1;
+    Log_info("About to write to NVS: PREFERENCES_DEVICE_REGISTERED_KEY");
     preferences.putBool(PREFERENCES_DEVICE_REGISTERED_KEY, false);
+    Log_info("NVS write completed");
     Log.info("%s [%d]: Display TRMNL logo end\r\n", __FILE__, __LINE__);
+    Log_info("About to write to NVS: PREFERENCES_FILENAME_KEY");
     preferences.putString(PREFERENCES_FILENAME_KEY, "");
+    Log_info("NVS string write completed");
   }
 
   Log_info("Firmware version %s", FW_VERSION_STRING);

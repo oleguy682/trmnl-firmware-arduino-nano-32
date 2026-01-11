@@ -1075,15 +1075,22 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
     Log_info("About to call bbep.refresh() - this may take several seconds");
     bbep.refresh(iRefreshMode, bWait);
     Log_info("bbep.refresh() completed successfully");
+
+    Log_info("Checking if buffer needs to be freed: bAlloc=%d", bAlloc);
     if (bAlloc) {
+        Log_info("Calling freeBuffer()...");
         bbep.freeBuffer();
+        Log_info("freeBuffer() completed");
     }
+
+    Log_info("Incrementing update counter: iUpdateCount=%d", iUpdateCount);
     iUpdateCount++;
+    Log_info("Update counter incremented: iUpdateCount=%d", iUpdateCount);
 #else
     bbep.setCustomMatrix(u8_graytable, sizeof(u8_graytable));
     bbep.fullUpdate();
 #endif
-    Log_info("display_show_image end");
+    Log_info("display_show_image end - about to return");
 }
 /**
  * @brief Function to read an image from the file system
