@@ -1066,8 +1066,12 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
         Log_info("%s [%d]: Forcing fast refresh (not partial) since the TRMNL refresh_rate is set to > 30 min\n", __FILE__, __LINE__);
         iRefreshMode = REFRESH_FAST;
     }
-    if (!bWait) iRefreshMode = REFRESH_PARTIAL; // fast update when showing loading screen
-    Log_info("%s [%d]: EPD refresh mode: %d\r\n", __FILE__, __LINE__, iRefreshMode);
+    // CRITICAL FIX: Don't override REFRESH_FULL for loading screen
+    // The display needs FULL refresh on first boot or it won't update
+    if (!bWait && iRefreshMode != REFRESH_FULL) {
+        iRefreshMode = REFRESH_PARTIAL; // fast update when showing loading screen (if not already FULL)
+    }
+    Log_info("%s [%d]: EPD refresh mode: %d (0=FULL, 1=FAST, 2=PARTIAL)\r\n", __FILE__, __LINE__, iRefreshMode);
     Log_info("About to call bbep.refresh() - this may take several seconds");
     bbep.refresh(iRefreshMode, bWait);
     Log_info("bbep.refresh() completed successfully");
