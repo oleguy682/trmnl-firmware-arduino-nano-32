@@ -89,12 +89,17 @@ void display_init(void)
              EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_CS_PIN, EPD_MOSI_PIN, EPD_SCK_PIN);
     bbep.initIO(EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_CS_PIN, EPD_MOSI_PIN, EPD_SCK_PIN, 8000000);
 
+    // CRITICAL FIX: Enable internal pull-up on BUSY pin for UC81xx chips
+    // UC81xx BUSY pin is active HIGH when idle, needs pull-up resistor
+    Log_info("Enabling internal pull-up on BUSY pin (GPIO %d)", EPD_BUSY_PIN);
+    pinMode(EPD_BUSY_PIN, INPUT_PULLUP);
+
     // Wait a moment for hardware to stabilize
     delay(100);
 
-    // Check BUSY pin state immediately after initialization
+    // Check BUSY pin state after enabling pull-up
     int busy_state = digitalRead(EPD_BUSY_PIN);
-    Log_info("BUSY pin (GPIO %d) state after initIO: %d (UC81xx expects HIGH=1 when idle)",
+    Log_info("BUSY pin (GPIO %d) state after pull-up enabled: %d (UC81xx expects HIGH=1 when idle)",
              EPD_BUSY_PIN, busy_state);
 
     Log_info("Panel type being set: %d (0=EP75_800x480, 1=EP75_800x480_GEN2)", dpList[iTempProfile].OneBit);
