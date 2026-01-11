@@ -6,7 +6,7 @@
 
 void setup()
 {
-  
+  delay(10000);
   bool testPassed = checkIfAlreadyPassed();
   if (!testPassed) {
     startQA();
