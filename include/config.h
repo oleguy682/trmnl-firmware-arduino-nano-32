@@ -106,8 +106,9 @@ enum WIFI_CONNECT_RETRY_TIME // Time to sleep before trying to connect to the Wi
 #define DEVICE_MODEL "arduino_nano_esp32"
 #define PIN_INTERRUPT 5         //external button on GPIO 5 (RTC-capable for deep sleep wake)
 #define FAKE_BATTERY_VOLTAGE    //using USB power for development, no battery ADC yet
-// Using default TEMP_PROFILE_DEFAULT (0) for standard GDEW075T7 panel
-// Panel: GDEW075T7 800x480 with EK79655 (GD7965) driver, maps to EP75_800x480
+#undef TEMP_PROFILE_DEFAULT     //override global default
+#define TEMP_PROFILE_DEFAULT TEMP_PROFILE_A  //GDEW075T7 (W variant) needs GEN2 profile
+// Panel: GDEW075T7 800x480 with EK79655 (GD7965) driver -> EP75_800x480_GEN2
 #endif
 
 #if defined(BOARD_XIAO_EPAPER_DISPLAY) || defined(BOARD_SEEED_RETERMINAL_E1001)
