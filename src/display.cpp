@@ -87,7 +87,15 @@ void display_init(void)
 #ifdef BB_EPAPER
     Log_info("Initializing display I/O pins (DC=%d, RST=%d, BUSY=%d, CS=%d, MOSI=%d, SCK=%d)",
              EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_CS_PIN, EPD_MOSI_PIN, EPD_SCK_PIN);
+
+#ifdef BOARD_ARDUINO_NANO_ESP32
+    // Try slower SPI speed for Arduino Nano ESP32 - 8MHz may be too fast
+    uint32_t spi_speed = 4000000;  // 4MHz instead of 8MHz
+    Log_info("Using SPI speed: %d Hz (slower for stability)", spi_speed);
+    bbep.initIO(EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_CS_PIN, EPD_MOSI_PIN, EPD_SCK_PIN, spi_speed);
+#else
     bbep.initIO(EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_CS_PIN, EPD_MOSI_PIN, EPD_SCK_PIN, 8000000);
+#endif
 
     // CRITICAL FIX: Enable internal pull-up on BUSY pin for UC81xx chips
     // UC81xx BUSY pin is active HIGH when idle, needs pull-up resistor
