@@ -68,11 +68,38 @@ static bool g_light_sleep_enabled = true;
 void display_init(void)
 {
     Log_info("dev module start");
+
+#ifdef BOARD_ARDUINO_NANO_ESP32
+    // CRITICAL: Force correct temperature profile for Arduino Nano ESP32
+    // This board MUST use TEMP_PROFILE_A (1) for GDEW075T7 GEN2 panel
+    iTempProfile = TEMP_PROFILE_A;
+    Log_info("Arduino Nano ESP32: forcing temperature profile to %d (GDEW075T7 GEN2)", iTempProfile);
+    // Save to NVS to persist for future boots
+    if (preferences.getUInt(PREFERENCES_TEMP_PROFILE, 0xFF) != iTempProfile) {
+        preferences.putUInt(PREFERENCES_TEMP_PROFILE, iTempProfile);
+        Log_info("Updated NVS with correct temperature profile");
+    }
+#else
     iTempProfile = preferences.getUInt(PREFERENCES_TEMP_PROFILE, TEMP_PROFILE_DEFAULT);
     Log_info("Saved temperature profile: %d", iTempProfile);
+#endif
+
 #ifdef BB_EPAPER
+    Log_info("Initializing display I/O pins (DC=%d, RST=%d, BUSY=%d, CS=%d, MOSI=%d, SCK=%d)",
+             EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_CS_PIN, EPD_MOSI_PIN, EPD_SCK_PIN);
     bbep.initIO(EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_CS_PIN, EPD_MOSI_PIN, EPD_SCK_PIN, 8000000);
+
+    // Wait a moment for hardware to stabilize
+    delay(100);
+
+    // Check BUSY pin state immediately after initialization
+    int busy_state = digitalRead(EPD_BUSY_PIN);
+    Log_info("BUSY pin (GPIO %d) state after initIO: %d (UC81xx expects HIGH=1 when idle)",
+             EPD_BUSY_PIN, busy_state);
+
+    Log_info("Panel type being set: %d (0=EP75_800x480, 1=EP75_800x480_GEN2)", dpList[iTempProfile].OneBit);
     bbep.setPanelType(dpList[iTempProfile].OneBit);
+    Log_info("Panel type set successfully. Chip type should be UC81xx (expects BUSY=HIGH when idle)");
 #else
     bbep.initPanel(BB_PANEL_EPDIY_V7_16); //, 26000000);
     bbep.setPanelSize(1872, 1404, BB_PANEL_FLAG_MIRROR_X);
@@ -964,8 +991,8 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
             Log_info("Loading G5 image to display buffer");
             bbep.loadG5Image(image_buffer, x, y, BBEP_WHITE, BBEP_BLACK);
             Log_info("G5 image loaded successfully");
-        } 
-        else 
+        }
+        else
         {
          // This work-around is due to a lack of RAM; the correct method would be to use loadBMP()
             flip_image(image_buffer+62, bbep.width(), bbep.height(), false); // fix bottom-up bitmap images
@@ -974,9 +1001,22 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
 #endif
         }
 #ifdef BB_EPAPER
-        Log_info("About to call writePlane(PLANE_0) - this sends data to display via SPI");
+        // Critical diagnostic checks before writePlane
+        Log_info("=== Pre-writePlane Diagnostics ===");
+        Log_info("Temperature profile: %d", iTempProfile);
+        Log_info("Expected panel: EP75_800x480_GEN2 (profile 1)");
+        Log_info("BUSY pin (GPIO %d) current state: %d", EPD_BUSY_PIN, digitalRead(EPD_BUSY_PIN));
+        Log_info("UC81xx chips expect BUSY=HIGH (1) when idle/ready");
+        Log_info("About to call writePlane(PLANE_0) - this will:");
+        Log_info("  1. Call bbepWriteCmd() to send command");
+        Log_info("  2. Which may call bbepWakeUp() if display is asleep");
+        Log_info("  3. bbepWakeUp() will wait for BUSY pin to go HIGH");
+        Log_info("If firmware hangs here, BUSY pin is likely stuck LOW");
+        Log_info("=== Starting writePlane now ===");
+
         bbep.writePlane(PLANE_0); // send image data to the EPD
-        Log_info("writePlane(PLANE_0) completed successfully");
+
+        Log_info("=== writePlane(PLANE_0) completed successfully! ===");
         iRefreshMode = REFRESH_PARTIAL;
 #endif
         iUpdateCount = 1; // use partial update
