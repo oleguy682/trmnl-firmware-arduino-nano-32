@@ -974,7 +974,9 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
 #endif
         }
 #ifdef BB_EPAPER
+        Log_info("About to call writePlane(PLANE_0) - this sends data to display via SPI");
         bbep.writePlane(PLANE_0); // send image data to the EPD
+        Log_info("writePlane(PLANE_0) completed successfully");
         iRefreshMode = REFRESH_PARTIAL;
 #endif
         iUpdateCount = 1; // use partial update
