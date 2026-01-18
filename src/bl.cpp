@@ -1890,12 +1890,7 @@ static void goToSleep(void)
 #elif CONFIG_IDF_TARGET_ESP32C3
   esp_deep_sleep_enable_gpio_wakeup(1 << PIN_INTERRUPT, ESP_GPIO_WAKEUP_GPIO_LOW);
 #elif CONFIG_IDF_TARGET_ESP32S3
-  #ifndef BOARD_ARDUINO_NANO_ESP32
-  // Skip GPIO wakeup for Arduino Nano ESP32 (no physical button connected)
   esp_sleep_enable_ext0_wakeup((gpio_num_t)PIN_INTERRUPT, 0);
-  #else
-  Log.info("%s [%d]: GPIO wakeup disabled (Arduino Nano ESP32 - no button)\r\n", __FILE__, __LINE__);
-  #endif
 #else
 #error "Unsupported ESP32 target for GPIO wakeup configuration"
 #endif
