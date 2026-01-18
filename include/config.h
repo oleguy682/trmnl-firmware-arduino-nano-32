@@ -104,7 +104,7 @@ enum WIFI_CONNECT_RETRY_TIME // Time to sleep before trying to connect to the Wi
 #define VBAT_SWITCH_LEVEL HIGH  //load switch enable pin active level
 #elif defined(BOARD_ARDUINO_NANO_ESP32)
 #define DEVICE_MODEL "arduino_nano_esp32"
-#define PIN_INTERRUPT 0         //the boot button on the Arduino Nano ESP32 this button works as regular wakeup button
+#define PIN_INTERRUPT 9         //the boot button on the Arduino Nano ESP32 this button works as regular wakeup button
 #define FAKE_BATTERY_VOLTAGE
 
 #endif
